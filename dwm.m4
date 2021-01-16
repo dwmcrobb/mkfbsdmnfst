@@ -17,7 +17,7 @@ define(DWM_SET_PKGVARS,[
     *)
       ;;
   esac
-  STAGING=`realpath ./staging`
+  STAGING=`pwd`"/staging"
   AC_SUBST(OSNAME)
   AC_SUBST(OSVERSION)
   AC_SUBST(STAGING)

@@ -1,11 +1,12 @@
 *.o
-mkfbsdmnfst-*.txz
 DwmFreeBSDPkgManifestLex.cc
 DwmFreeBSDPkgManifestParse.cc
 DwmFreeBSDPkgManifestParse.hh
 Makefile.vars
+autom4te.cache/**
 config.log
 config.status
 fbsd_manifest
 mkfbsdmnfst
+mkfbsdmnfst-*.txz
 staging/**

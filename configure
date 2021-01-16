@@ -3016,7 +3016,7 @@ $as_echo_n "checking package variables... " >&6; }
     *)
       ;;
   esac
-  STAGING=`realpath ./staging`
+  STAGING=`pwd`"/staging"
 
 
 
