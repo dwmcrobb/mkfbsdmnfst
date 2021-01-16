@@ -1,0 +1,117 @@
+.Dd April 10, 2017
+.Dt mkfbsdmnfst 1
+.Os
+.Sh NAME
+.Nm mkfbsdmnfst
+.Nd manipulates a FreeBSD package manifest file (+MANIFEST).
+.Sh SYNOPSIS
+.Nm
+.Ar -s staging_directory
+.Op Fl n Ar name
+.Op Fl v Ar version
+.Op Fl o Ar origin
+.Op Fl c Ar comment
+.Op Fl d Ar desc
+.Op Fl g Ar group
+.Op Fl w Ar website
+.Op Fl m Ar maintainer
+.Op Fl p Ar prefix
+.Op Fl r Ar manifest_file
+.Op Fl u Ar user
+.Op Ar directories...
+.Sh DESCRIPTION
+.Nm
+emits a FreeBSD package manifest file (+MANIFEST) on stdout from a template
+manifest file and/or command-line options.  It may be used when creating
+software packages for FreeBSD.
+.Ss Required arguments
+.Bl -tag -width indent
+.It Fl s Ar staging_directory
+The \fIstaging_directory\fR is traversed recursively and all files within are
+added to the package in the manifest.  In addition, we use binaries and
+shared libraries found in this directory to determine external dependencies.
+.El
+.Ss Optional arguments
+.Bl -tag -width indent
+.It Fl n Ar name
+Sets the name of the package in the manifest to \fIname\fR.  A package name
+is required, but may be specified inside a \fImanifest_file\fR used in the
+\fI-r manifest_file\fR argument instead of \fI-n name\fR.
+.It Fl v Ar version
+Sets the version of the package in the manifest to \fIversion\fR.
+A package version is required, but may be specified inside a
+\fImanifest_file\fR used in the \fI-r manifest_file\fR argument instead
+of \fI-n name\fR.
+.It Fl o Ar origin
+Sets the origin of the package in the manifest to \fIorigin\fR.
+.It Fl c Ar comment
+Sets the package comment in the manifest to \fIcomment\fR.
+.It Fl d Ar desc
+Sets the package description in the manifest to \fIdesc\fR.
+.It Fl g Ar group
+Sets the package group in the manifest to \fIgroup\fR.
+.It Fl w Ar website
+Sets the package's website in the manifest to \fIwebsite\fR.
+.It Fl m Ar maintainer
+Sets the package's maintainer in the manifest to \fImaintainer\fR.
+.It Fl p Ar prefix
+Sets the package's prefix in the manifest to \fIprefix\fR.
+.It Fl r Ar manifest_file
+Uses the given \fImanifest_file\fR as input.  This is typically used
+as a template type of input, or created as part of a software build
+process and then added to with command line arguments.
+.It Fl u Ar user
+Sets the default owner of the files installed by the package to \fIuser\fR.
+This is typically \fIroot\fR.
+.It Ar directories...
+Additional \fIdirectories\fR to be searched for dependencies.
+.El
+.Sh AUTOMATIC DEPENDENCIES
+.Xr mkfbsdmnfst 1 will try to automatically determine dependencies and
+add them to the manifest by looking at files in \fIstaging_directory\fR
+and \fIdirectories...\fR .  In addition, if it finds a dependency in your
+template \fImanifest_file\fR whose version is incorrect, it will correct it.
+.Sh EXAMPLES
+A simple example might start with a \fItemplate_mnfst\fR file containing:
+.Bd -literal
+    name: "foo"
+    version: "0.1.0"
+    origin: "devel/libfoo"
+    prefix: "/usr/local"
+    www: "http://www.foo.bar"
+    maintainer: "someone@foo.bar"
+    comment: "foo library"
+    desc: "Miscellaneous C functions."
+    licenselogic: "single"
+    licenses: ["BSD"]
+    categories: ["devel"]
+.Ed
+
+Assuming you have all of the files for the package in ./staging/usr/local,
+you might then create your manifest file with:
+.Bd -literal
+    mkfbsdmnfst -r template_mnfst ./staging > ./staging/+MANIFEST
+.Ed
+
+And then create the foo-0.1.0 package with:
+.Bd -literal
+    pkg create -o . -r staging -m staging
+.Ed
+
+.Sh REAL EXAMPLES
+libDwm uses
+.Xr mkfbsdmnfst 1 when creating the libDwm package for FreeBSD.  See the
+top-level Makefile and packaging/fbsd_manifest.in inside the libDwm source
+distribution.
+
+Other packages using
+.Xr mkfbsdmnfst 1 as part of the packaging process include libDwmAuth,
+libDwmPf, libDwmRDAP, mcblock, mcflow, mcrover and DwmDns.
+.Sh SEE ALSO
+.Xr fbsddeps 1 ,
+.Xr pkg-create 8
+.Sh AUTHORS
+Copyright (c) 2016, 2020 Daniel W. McRobb
+.Mt dwm@mcplex.net
+.Pp
+

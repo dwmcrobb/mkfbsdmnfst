@@ -1,0 +1,8 @@
+DwmFreeBSDPkgManifestLex.cc
+DwmFreeBSDPkgManifestParse.cc
+DwmFreeBSDPkgManifestParse.hh
+Makefile.vars
+config.log
+config.status
+fbsd_manifest
+mkfbsdmnfst
