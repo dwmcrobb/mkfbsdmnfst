@@ -1,7 +1,7 @@
 include ./Makefile.vars
 
 CXXFLAGS = -std=c++17
-INCS     = -I/usr/src/contrib/sqlite3 -I.
+INCS     = -I/usr/include/private/sqlite3 -I.
 LIBS     = ${OSLIBS}
 OBJFILES = DwmFreeBSDPkgManifestLex.o \
 	   DwmFreeBSDPkgManifestParse.o \

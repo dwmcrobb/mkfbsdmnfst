@@ -1,3 +1,5 @@
+*.o
+mkfbsdmnfst-*.txz
 DwmFreeBSDPkgManifestLex.cc
 DwmFreeBSDPkgManifestParse.cc
 DwmFreeBSDPkgManifestParse.hh
