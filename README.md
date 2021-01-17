@@ -19,7 +19,7 @@ gmake package
 ## Install
 ```gmake package``` will create a FreeBSD package which can be install with ```pkg install ...```.  For example,
 ```
-pkg install mkfbsdmnfst-1.0.0.txz
+pkg install mkfbsdmnfst-1.0.2.txz
 ```
 
 ### Usage
