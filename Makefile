@@ -8,7 +8,7 @@ OBJFILES = DwmFreeBSDPkgManifestLex.o \
 	   mkfbsdmnfst.o
 OBJDEPS  = $(OBJFILES:%.o=deps/%_deps)
 PKGTARGETS = ${STAGING}${PREFIXDIR}/bin/mkfbsdmnfst \
-	     ${STAGING}${PREFIXDIR}/man/mkfbsdmnfst.1
+	     ${STAGING}${PREFIXDIR}/man/man1/mkfbsdmnfst.1
 
 mkfbsdmnfst: ${OBJFILES}
 	${CXX} ${CXXFLAGS} ${LDFLAGS} -o $@ $^ ${LIBS}
@@ -22,7 +22,7 @@ pkgprep: ${PKGTARGETS}
 ${STAGING}${PREFIXDIR}/bin/mkfbsdmnfst: mkfbsdmnfst
 	./install-sh -s -c -m 555 $< $@
 
-${STAGING}${PREFIXDIR}/man/mkfbsdmnfst.1: mkfbsdmnfst.1
+${STAGING}${PREFIXDIR}/man/man1/mkfbsdmnfst.1: mkfbsdmnfst.1
 	./install-sh -c -m 644 $< $@
 
 DwmFreeBSDPkgManifestLex.cc: DwmFreeBSDPkgManifestLex.ll
