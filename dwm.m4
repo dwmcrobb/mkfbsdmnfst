@@ -71,13 +71,12 @@ define(MCLOC_NEED_LIBSTDCPPFS,[
 dnl #-------------------------------------------------------------------------
 define(DWM_GIT_TAG,[
   gittag=`git describe --tags --dirty 2>/dev/null`
-  dirty=`echo "${gittag}" | awk -F '-' '$NF ~ /g[[a-f0-9]]+/ {if (NF > 2 && $(NF -1) ~ /[[0-9]]+/) {print $NF}}'`
+  dirty=`echo "${gittag}" | awk -F '-' '{ if (NF > 2) { print "dirty"; } }'`
   if test -z "${dirty}"; then
     GIT_TAG="${gittag}"
     GIT_VERSION=`echo "${gittag}" | awk -F '-' '{print $NF}'`
   else
-    fakevers=`echo "${dirty}" | cut -d'g' -f2`
-    fakevers=`echo $((0x${fakevers}))`
+    fakevers=`date +%Y%m%d`
     GIT_TAG="[$1]-0.0.${fakevers}"
     GIT_VERSION="0.0.${fakevers}"
   fi
