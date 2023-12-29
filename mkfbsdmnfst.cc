@@ -440,9 +440,11 @@ CorrectDiscoveredDependencies(Manifest & manifest,
                   return (dep.Name() == mdep.Name());
                 })
         == manifest.Dependencies().end()) {
-      cerr << "Added dependency " << dep.Name()
-           << " version " << dep.Version() << '\n';
-      manifest.Dependencies().push_back(dep);
+      if (dep.Name() != manifest.Name()) {
+        cerr << "Added dependency " << dep.Name()
+             << " version " << dep.Version() << '\n';
+        manifest.Dependencies().push_back(dep);
+      }
     }
   }
   return;

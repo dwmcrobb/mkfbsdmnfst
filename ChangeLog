@@ -1,0 +1,6 @@
+2023-12-29  Daniel W. McRobb  <dwm@kiva.mcplex.net>
+
+	* tagged as mkfbsdmnfst-1.0.4
+
+	* mkfbsdmnfst.cc: don't add ourself as a dependency!
+
