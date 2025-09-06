@@ -43,6 +43,7 @@ extern "C" {
   #include <fcntl.h>
   #include <fts.h>
   #include <libgen.h>
+  #include <openssl/evp.h>
   #include <openssl/sha.h>
   #include <sys/types.h>
   #include <sys/stat.h>
@@ -51,6 +52,7 @@ extern "C" {
   #include <sqlite3.h>
 }
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -278,18 +280,22 @@ vector<string> GetFiles(const string & dirName)
 //----------------------------------------------------------------------------
 static string GetSHA256(const string & filename)
 {
-  SHA_CTX       ctx;
-  unsigned char md[SHA_DIGEST_LENGTH];
+  unsigned char  md[SHA_DIGEST_LENGTH];
+  memset(md, 0, sizeof(md));
   int fd = open(filename.c_str(), O_RDONLY);
   if (fd >= 0) {
-    SHA1_Init(&ctx);
-    uint8_t  buf[65536];
-    ssize_t  bytesRead;
-    while ((bytesRead = read(fd, buf, 65536)) > 0) {
-      SHA1_Update(&ctx, buf, bytesRead);
+    EVP_MD_CTX  *sha1_ctx = EVP_MD_CTX_new();
+    if (sha1_ctx) {
+      EVP_DigestInit(sha1_ctx, EVP_sha1());
+      uint8_t  buf[65536];
+      ssize_t  bytesRead;
+      while ((bytesRead = read(fd, buf, 65536)) > 0) {
+        EVP_DigestUpdate(sha1_ctx, buf, bytesRead);
+      }
+      EVP_DigestFinal(sha1_ctx, &(md[0]), nullptr);
+      EVP_MD_CTX_free(sha1_ctx);
     }
     close(fd);
-    SHA1_Final(&(md[0]), &ctx);
   }
 
   ostringstream  os;
