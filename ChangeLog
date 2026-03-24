@@ -1,5 +1,7 @@
 2026-03-24  dwm  <dwm@ria.mcplex.net>
 
+	* tagged as mkfbsdmnfst-1.0.6
+
 	* mkfbsdmnfst.cc: Finally get around to fixing dependency
 	generation.  Newer versions of FreeBSD require me to open the
 	sqlite3 package database using a URI so I can add 'immutable=1' as
