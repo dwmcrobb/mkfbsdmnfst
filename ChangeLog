@@ -1,7 +1,15 @@
+2026-03-24  dwm  <dwm@ria.mcplex.net>
+
+	* mkfbsdmnfst.cc: Finally get around to fixing dependency
+	generation.  Newer versions of FreeBSD require me to open the
+	sqlite3 package database using a URI so I can add 'immutable=1' as
+	a parameter.  Opening the database in read-only mode (using
+	SQLITE_OPEN_READONLY) is not sufficient as a non-root user.
+
 2025-09-05  Daniel W. McRobb  <dwm@kiva.mcplex.net>
 
 	* tagged as mkfbsdmnfst-1.0.5
-	
+
 	* mkfbsdmnfst.cc: Replace deprecated openssl sha1 functions with
 	non-deprecated openssl sha1 functions.
 
