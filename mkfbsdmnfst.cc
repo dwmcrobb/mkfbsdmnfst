@@ -154,9 +154,9 @@ static string GetInstalledPackageVersion(string packageName)
   string rc;
   string  query("select packages.version from packages");
   query += " where packages.name = '" + packageName + "'";
-  sqlite3  *ppdb;
-  if (sqlite3_open_v2("/var/db/pkg/local.sqlite", &ppdb,
-                      SQLITE_OPEN_READONLY, 0)
+  sqlite3  *ppdb = nullptr;
+  if (sqlite3_open_v2("file:/var/db/pkg/local.sqlite?immutable=1",
+                      &ppdb, SQLITE_OPEN_READONLY|SQLITE_OPEN_URI, 0)
       == SQLITE_OK) {
     sqlite3_stmt *ppStmt;
     if (sqlite3_prepare(ppdb, query.c_str(), -1, &ppStmt, 0) == SQLITE_OK) {
@@ -165,7 +165,16 @@ static string GetInstalledPackageVersion(string packageName)
       }
       sqlite3_finalize(ppStmt);
     }
+    else {
+      cerr << "sqlite3_prepare(\"" << query << "\") failed: "
+           << sqlite3_errmsg(ppdb) << " {" << __FILE__ << ':' << __LINE__
+           << "}\n";
+    }
     sqlite3_close_v2(ppdb);
+  }
+  else {
+    cerr << "sqlite3_open_v2(\"/var/db/pkg/local.sqlite\") failed {"
+         << __FILE__ << ':' << __LINE__ << "}\n";
   }
   return rc;
 }
@@ -173,31 +182,40 @@ static string GetInstalledPackageVersion(string packageName)
 //----------------------------------------------------------------------------
 //!  
 //----------------------------------------------------------------------------
-static void GetPackageDeps(const set<string> & libs, set<string> & packages)
+static void GetPackageDeps(const set<string> & libs,
+                           set<pair<string,string>> & packages)
 {
   string  queryPreamble("select packages.name, packages.version, packages.id,"
                         " files.package_id, files.path"
                         " from packages, files where"
                         " packages.id = files.package_id"
                         " and files.path = ");
-  sqlite3  *ppdb;
-  if (sqlite3_open_v2("/var/db/pkg/local.sqlite", &ppdb,
-                      SQLITE_OPEN_READONLY, 0)
+  sqlite3  *ppdb = nullptr;
+  if (sqlite3_open_v2("file:/var/db/pkg/local.sqlite?immutable=1", &ppdb,
+                      SQLITE_OPEN_READONLY|SQLITE_OPEN_URI, 0)
       == SQLITE_OK) {
     for (auto lib : libs) {
-      string  qrystr(queryPreamble + '"' + lib + '"');
+      string  qrystr(queryPreamble + '\'' + lib + '\'');
       sqlite3_stmt *ppStmt;
-      if (sqlite3_prepare(ppdb, qrystr.c_str(), -1, &ppStmt, 0) == SQLITE_OK) {
+      if (sqlite3_prepare_v2(ppdb, qrystr.c_str(), -1, &ppStmt, 0) == SQLITE_OK) {
         while (sqlite3_step(ppStmt) == SQLITE_ROW) {
           string  pkgName((const char *)sqlite3_column_text(ppStmt, 0));
-          pkgName += '-';
-          pkgName += (const char *)sqlite3_column_text(ppStmt, 1);
-          packages.insert(pkgName);
+          string  pkgVersion((const char *)sqlite3_column_text(ppStmt, 1));
+          packages.insert({pkgName,pkgVersion});
         }
+      }
+      else {
+        cerr << "sqlite3_prepare_v2(\"" << qrystr << "\") failed: "
+             << sqlite3_errmsg(ppdb) << " {" << __FILE__ << ':' << __LINE__
+             << "}\n";
       }
       sqlite3_finalize(ppStmt);
     }
     sqlite3_close_v2(ppdb);
+  }
+  else {
+    cerr << "sqlite3_open_v2(\"/var/db/pkg/local.sqlite\") failed {"
+         << __FILE__ << ':' << __LINE__ << "}\n";
   }
   return;
 }
@@ -205,33 +223,43 @@ static void GetPackageDeps(const set<string> & libs, set<string> & packages)
 //----------------------------------------------------------------------------
 //!  
 //----------------------------------------------------------------------------
-static void GetPackageInfo(const set<string> & pkgs,
+static void GetPackageInfo(const set<pair<string,string>> & pkgs,
                            vector<Manifest::Dependency> & pkginfo)
 {
-  regex  rgx("([^ \\t]+)[ \\t]+([^ \\t]+)[ \\t]+([^ \\t]+)\\n",
-             regex::ECMAScript|regex::optimize);
-  smatch  sm;
-  for (auto pkg : pkgs) {
-    string  querycmd("pkg query \"%n %o %v\" " + pkg);
-    FILE    *querypipe = popen(querycmd.c_str(), "r");
-    if (querypipe) {
-      char    line[4096];
-      if (fgets(line, 4096, querypipe) != NULL) {
-        string  s(line);
-        if (regex_search(s, sm, rgx)) {
-          if (sm.size() == 4) {
-            Manifest::Dependency  dep(sm[1].str(), sm[2].str(), sm[3].str());
-            if (find_if(pkginfo.begin(), pkginfo.end(),
+  sqlite3  *ppdb = nullptr;
+  if (sqlite3_open_v2("file:/var/db/pkg/local.sqlite?immutable=1",
+                      &ppdb, SQLITE_OPEN_READONLY|SQLITE_OPEN_URI, 0)
+      == SQLITE_OK) {
+    for (auto pkg : pkgs) {
+      string query = "select packages.name,packages.origin,packages.version"
+        " from packages where packages.name = '" + pkg.first + "' and"
+        " packages.version = '" + pkg.second + "'";
+      sqlite3_stmt *ppStmt;
+      if (sqlite3_prepare(ppdb, query.c_str(), -1, &ppStmt, 0) == SQLITE_OK) {
+        if (sqlite3_step(ppStmt) == SQLITE_ROW) {
+          Manifest::Dependency  dep((const char *)sqlite3_column_text(ppStmt, 0),
+                                    (const char *)sqlite3_column_text(ppStmt, 1),
+                                    (const char *)sqlite3_column_text(ppStmt, 2));
+          if (find_if(pkginfo.begin(), pkginfo.end(),
                         [&] (Manifest::Dependency const & item)
                         { return dep.Name() == item.Name(); })
                 == pkginfo.end()) {
               pkginfo.push_back(dep);
-            }
           }
         }
+        sqlite3_finalize(ppStmt);
       }
-      pclose(querypipe);
+      else {
+        cerr << "sqlite3_prepare(\"" << query << "\") failed: "
+             << sqlite3_errmsg(ppdb) << " {" << __FILE__ << ':' << __LINE__
+             << "}\n";
+      }
     }
+    sqlite3_close_v2(ppdb);
+  }
+  else {
+    cerr << "sqlite3_open_v2(\"/var/db/pkg/local.sqlite\") failed {"
+         << __FILE__ << ':' << __LINE__ << "}\n";
   }
   return;
 }
@@ -478,7 +506,7 @@ static void ScanForPackageDependencies(const string & dirName,
     }
   }
   if (! sharedLibs.empty()) {
-    set<string>  packageDeps;
+    set<pair<string,string>>  packageDeps;
     GetPackageDeps(sharedLibs, packageDeps);
     if (! packageDeps.empty()) {
       vector<Manifest::Dependency>  dependencies;
